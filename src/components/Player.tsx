@@ -2,14 +2,17 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AudioPlayer } from '../audio/player';
 
+export type AudioStatus = 'loading' | 'ready' | 'missing';
+
 interface Props {
   player: AudioPlayer;
-  hasAudio: boolean;
+  status: AudioStatus;
   rate: number;
   onRateChange: (rate: number) => void;
 }
 
-export default function Player({ player, hasAudio, rate, onRateChange }: Props) {
+export default function Player({ player, status, rate, onRateChange }: Props) {
+  const hasAudio = status === 'ready';
   const [isPlaying, setIsPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -75,10 +78,16 @@ export default function Player({ player, hasAudio, rate, onRateChange }: Props) 
 
   return (
     <div className="rounded-lg bg-slate-800/70 p-3 ring-1 ring-slate-700">
-      {!hasAudio && (
+      {status === 'loading' && (
+        <p className="mb-2 rounded bg-slate-700/60 px-2 py-1 text-xs text-slate-300">
+          お手本を読み込み・解析中…
+        </p>
+      )}
+      {status === 'missing' && (
         <p className="mb-2 rounded bg-amber-900/40 px-2 py-1 text-xs text-amber-200">
           お手本音源が見つかりません（public/audio/{'{id}'}.mp3）。録音と自分のピッチ表示は利用できますが、
-          重ね比較・スコアにはお手本が必要です。§8 の generate-tts か自前録音を配置してください。
+          重ね比較・スコアにはお手本が必要です。`npm run sample-audio`（動作確認用の合成音）か、§8 の
+          generate-tts／自前録音を配置してください。
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">

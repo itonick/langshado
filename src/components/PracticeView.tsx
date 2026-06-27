@@ -8,7 +8,7 @@ import { pitchScore, scoreColor } from '../audio/score';
 import { getPhrase } from '../data/phrases';
 import { PASS_COUNT, PASS_SCORE, useStore } from '../store';
 import PitchOverlay from './PitchOverlay';
-import Player from './Player';
+import Player, { type AudioStatus } from './Player';
 import SyllablePanel from './SyllablePanel';
 import SyllableText from './SyllableText';
 
@@ -34,7 +34,8 @@ export default function PracticeView({ phraseId, onBack }: Props) {
   const recorder = recorderRef.current;
 
   const [refPitch, setRefPitch] = useState<PitchPoint[] | null>(null);
-  const [hasAudio, setHasAudio] = useState(false);
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>('loading');
+  const hasAudio = audioStatus === 'ready';
   const [userPitch, setUserPitch] = useState<PitchPoint[] | null>(null);
   const [livePitch, setLivePitch] = useState<{ t: number; st: number }[]>([]);
   const [score, setScore] = useState<number | null>(null);
@@ -54,12 +55,14 @@ export default function PracticeView({ phraseId, onBack }: Props) {
     const url = audioUrl(phrase.id);
     player.loadUrl(url);
     setRefPitch(null);
-    setHasAudio(false);
+    setAudioStatus('loading');
     void loadAndAnalyze(url).then((pts) => {
       if (cancelled) return;
       if (pts && pts.length >= 2) {
         setRefPitch(pts);
-        setHasAudio(true);
+        setAudioStatus('ready');
+      } else {
+        setAudioStatus('missing');
       }
     });
     return () => {
@@ -240,7 +243,7 @@ export default function PracticeView({ phraseId, onBack }: Props) {
         />
       )}
 
-      <Player player={player} hasAudio={hasAudio} rate={rate} onRateChange={(r) => {
+      <Player player={player} status={audioStatus} rate={rate} onRateChange={(r) => {
         setRate(r);
         void updateSettings({ playbackRate: r });
       }} />
