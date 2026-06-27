@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# TTS の認証情報を誤ってコミットしないため
+*.gcp-key.json
+google-credentials.json
+.env
+.env.*
+!.env.example
+
+# 生成された音声（容量が大きい場合は再生成可能なので任意で無視）
+# public/audio/*.mp3
