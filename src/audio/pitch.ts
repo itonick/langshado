@@ -27,17 +27,23 @@ function median(values: number[]): number {
 /**
  * AudioBuffer を一定ホップでフレーム分割し、各フレームの F0 を YIN で求める。
  * お手本 mp3 をデコードしたバッファに対して使う。
+ * 一定フレームごとに setTimeout(0) で制御を返し、メインスレッドのフリーズを防ぐ。
  */
-export function extractF0Frames(buffer: AudioBuffer, hopMs = HOP_MS): F0Frame[] {
+export async function extractF0Frames(buffer: AudioBuffer, hopMs = HOP_MS): Promise<F0Frame[]> {
   const sampleRate = buffer.sampleRate;
   const channel = buffer.getChannelData(0);
   const detectPitch = Pitchfinder.YIN({ sampleRate, threshold: 0.1 });
   const hop = Math.max(1, Math.round((hopMs / 1000) * sampleRate));
   const frames: F0Frame[] = [];
+  const YIELD_EVERY = 5; // 約5フレーム（75ms分）ごとにブラウザへ制御を返す
+  let i = 0;
   for (let start = 0; start + FRAME_SIZE <= channel.length; start += hop) {
     const frame = channel.subarray(start, start + FRAME_SIZE);
     const f0 = detectPitch(frame);
     frames.push({ t: start / sampleRate, f0: f0 ?? null });
+    if (++i % YIELD_EVERY === 0) {
+      await new Promise<void>((r) => setTimeout(r, 0));
+    }
   }
   return frames;
 }
@@ -68,8 +74,8 @@ export function normalizePitch(frames: F0Frame[]): PitchPoint[] {
 }
 
 /** お手本 mp3（AudioBuffer）→ 正規化ピッチ列。参照・ユーザー共通の入口。 */
-export function analyzeBuffer(buffer: AudioBuffer): PitchPoint[] {
-  return normalizePitch(extractF0Frames(buffer));
+export async function analyzeBuffer(buffer: AudioBuffer): Promise<PitchPoint[]> {
+  return normalizePitch(await extractF0Frames(buffer));
 }
 
 let sharedCtx: AudioContext | null = null;
@@ -95,7 +101,7 @@ export async function loadAndAnalyze(url: string): Promise<PitchPoint[] | null> 
     if (!res.ok) return null;
     const buf = await res.arrayBuffer();
     const audio = await decodeAudio(buf);
-    return analyzeBuffer(audio);
+    return await analyzeBuffer(audio);
   } catch {
     return null;
   }

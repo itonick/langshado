@@ -86,21 +86,16 @@ export default function HomeView({ onSelectPhrase, onGoReview }: Props) {
         />
       </div>
 
-      {/* 声調ラダー */}
+      {/* ステップラダー：ロック中のステップは非表示 */}
       <div className="space-y-4">
-        {tierStates.map((ts) => (
+        {tierStates.filter((ts) => ts.unlocked).map((ts) => (
           <section
             key={ts.level}
-            className={`rounded-lg p-3 ring-1 ${
-              ts.unlocked ? 'bg-slate-800/40 ring-slate-700' : 'bg-slate-900/40 ring-slate-800'
-            }`}
+            className="rounded-lg bg-slate-800/40 p-3 ring-1 ring-slate-700"
           >
             <header className="mb-2 flex items-center justify-between">
               <div>
-                <h2 className="font-semibold">
-                  {!ts.unlocked && '🔒 '}
-                  {ts.tier.title}
-                </h2>
+                <h2 className="font-semibold">{ts.tier.title}</h2>
                 <p className="text-xs text-slate-400">{ts.tier.hint}</p>
               </div>
               <div className="text-right text-xs">
@@ -115,9 +110,9 @@ export default function HomeView({ onSelectPhrase, onGoReview }: Props) {
             </header>
             <div className="space-y-1.5">
               {ts.phrases.length === 0 ? (
-                <p className="text-xs text-slate-500">（この段の教材は未登録）</p>
+                <p className="text-xs text-slate-500">（このステップの教材は未登録）</p>
               ) : (
-                ts.phrases.map((p) => renderPhrase(getPhrase(p.id)!, !ts.unlocked))
+                ts.phrases.map((p) => renderPhrase(getPhrase(p.id)!, false))
               )}
             </div>
           </section>

@@ -17,6 +17,7 @@ export interface Phrase {
   syllables: Syllable[]; // スペース区切りの音節（句読点は除く）
   meaning: string; // フレーズ全体の意味（máy bay 等の複合語はここで担保）
   note?: string; // 補足メモ（任意）
+  tier?: number; // ステップ番号の明示値（省略時は声調から自動判定）
 }
 
 /** スペース区切りの本文から、句読点を除いた音節配列を作るヘルパー。 */
@@ -57,6 +58,7 @@ export const PHRASES: Phrase[] = [
     text: 'Tôi là sinh viên.',
     syllables: syl('Tôi', 'là', 'sinh', 'viên'),
     meaning: '私は学生です。（sinh viên＝学生／生員）',
+    tier: 6,
   },
 
   // ===== 段2: + sắc =====
@@ -72,6 +74,7 @@ export const PHRASES: Phrase[] = [
     text: 'Tôi uống cà phê.',
     syllables: syl('Tôi', 'uống', 'cà', 'phê'),
     meaning: '私はコーヒーを飲みます。（cà phê＝コーヒー）',
+    tier: 7,
   },
 
   // ===== 段3: + nặng =====
@@ -93,6 +96,7 @@ export const PHRASES: Phrase[] = [
     text: 'Tôi học tiếng Việt.',
     syllables: syl('Tôi', 'học', 'tiếng', 'Việt'),
     meaning: '私はベトナム語を勉強します。',
+    tier: 8,
   },
 
   // ===== 段4: + hỏi =====
@@ -114,6 +118,7 @@ export const PHRASES: Phrase[] = [
     text: 'Bạn khỏe không?',
     syllables: syl('Bạn', 'khỏe', 'không'),
     meaning: 'お元気ですか？',
+    tier: 9,
   },
 
   // ===== 段5: + ngã =====
@@ -129,9 +134,191 @@ export const PHRASES: Phrase[] = [
     text: 'Tôi cũng vậy.',
     syllables: syl('Tôi', 'cũng', 'vậy'),
     meaning: '私も同じです。',
+    tier: 10,
+  },
+];
+
+/** 関連例文。parentId でどのフレーズに紐付くかを示す。 */
+export interface ExampleSentence extends Phrase {
+  parentId: string;
+}
+
+export const EXAMPLE_SENTENCES: ExampleSentence[] = [
+  // ===== toi =====
+  {
+    id: 'toi-ex1',
+    parentId: 'toi',
+    text: 'Tôi đến từ Nhật Bản.',
+    syllables: syl('Tôi', 'đến', 'từ', 'Nhật', 'Bản'),
+    meaning: '私は日本から来ました。',
+  },
+  {
+    id: 'toi-ex2',
+    parentId: 'toi',
+    text: 'Tên tôi là Hana.',
+    syllables: syl('Tên', 'tôi', 'là', 'Hana'),
+    meaning: '私の名前はHanaです。',
+  },
+
+  // ===== chao =====
+  {
+    id: 'chao-ex1',
+    parentId: 'chao',
+    text: 'Chào buổi sáng!',
+    syllables: syl('Chào', 'buổi', 'sáng'),
+    meaning: 'おはようございます！',
+  },
+  {
+    id: 'chao-ex2',
+    parentId: 'chao',
+    text: 'Chào tạm biệt!',
+    syllables: syl('Chào', 'tạm', 'biệt'),
+    meaning: 'さようなら！',
+  },
+
+  // ===== nha =====
+  {
+    id: 'nha-ex1',
+    parentId: 'nha',
+    text: 'Nhà bạn ở đâu?',
+    syllables: syl('Nhà', 'bạn', 'ở', 'đâu'),
+    meaning: 'あなたの家はどこですか？',
+  },
+
+  // ===== gia-dinh =====
+  {
+    id: 'gia-dinh-ex1',
+    parentId: 'gia-dinh',
+    text: 'Gia đình tôi có bốn người.',
+    syllables: syl('Gia', 'đình', 'tôi', 'có', 'bốn', 'người'),
+    meaning: '私の家族は4人です。',
+  },
+
+  // ===== toi-la-sinh-vien =====
+  {
+    id: 'toi-la-sinh-vien-ex1',
+    parentId: 'toi-la-sinh-vien',
+    text: 'Tôi là sinh viên năm nhất.',
+    syllables: syl('Tôi', 'là', 'sinh', 'viên', 'năm', 'nhất'),
+    meaning: '私は1年生です。',
+  },
+
+  // ===== may-bay =====
+  {
+    id: 'may-bay-ex1',
+    parentId: 'may-bay',
+    text: 'Tôi đi bằng máy bay.',
+    syllables: syl('Tôi', 'đi', 'bằng', 'máy', 'bay'),
+    meaning: '私は飛行機で行きます。',
+  },
+  {
+    id: 'may-bay-ex2',
+    parentId: 'may-bay',
+    text: 'Vé máy bay bao nhiêu tiền?',
+    syllables: syl('Vé', 'máy', 'bay', 'bao', 'nhiêu', 'tiền'),
+    meaning: '飛行機のチケットはいくらですか？',
+  },
+
+  // ===== ca-phe =====
+  {
+    id: 'ca-phe-ex1',
+    parentId: 'ca-phe',
+    text: 'Cho tôi một cà phê sữa.',
+    syllables: syl('Cho', 'tôi', 'một', 'cà', 'phê', 'sữa'),
+    meaning: 'カフェオレを一杯ください。',
+  },
+
+  // ===== dai-hoc =====
+  {
+    id: 'dai-hoc-ex1',
+    parentId: 'dai-hoc',
+    text: 'Trường đại học ở đâu?',
+    syllables: syl('Trường', 'đại', 'học', 'ở', 'đâu'),
+    meaning: '大学はどこですか？',
+  },
+
+  // ===== viet-nam =====
+  {
+    id: 'viet-nam-ex1',
+    parentId: 'viet-nam',
+    text: 'Tôi muốn đến Việt Nam.',
+    syllables: syl('Tôi', 'muốn', 'đến', 'Việt', 'Nam'),
+    meaning: '私はベトナムに行きたいです。',
+  },
+
+  // ===== hoc-tieng-viet =====
+  {
+    id: 'hoc-tieng-viet-ex1',
+    parentId: 'hoc-tieng-viet',
+    text: 'Tôi học tiếng Việt mỗi ngày.',
+    syllables: syl('Tôi', 'học', 'tiếng', 'Việt', 'mỗi', 'ngày'),
+    meaning: '私は毎日ベトナム語を勉強します。',
+  },
+
+  // ===== cam-on =====
+  {
+    id: 'cam-on-ex1',
+    parentId: 'cam-on',
+    text: 'Cảm ơn rất nhiều!',
+    syllables: syl('Cảm', 'ơn', 'rất', 'nhiều'),
+    meaning: 'どうもありがとうございます！',
+  },
+  {
+    id: 'cam-on-ex2',
+    parentId: 'cam-on',
+    text: 'Không có gì.',
+    syllables: syl('Không', 'có', 'gì'),
+    meaning: 'どういたしまして。（直訳：何もない）',
+  },
+
+  // ===== pho =====
+  {
+    id: 'pho-ex1',
+    parentId: 'pho',
+    text: 'Tôi muốn ăn phở.',
+    syllables: syl('Tôi', 'muốn', 'ăn', 'phở'),
+    meaning: '私はフォーを食べたいです。',
+  },
+  {
+    id: 'pho-ex2',
+    parentId: 'pho',
+    text: 'Phở ở đây ngon lắm!',
+    syllables: syl('Phở', 'ở', 'đây', 'ngon', 'lắm'),
+    meaning: 'ここのフォーはとても美味しい！',
+  },
+
+  // ===== ban-khoe-khong =====
+  {
+    id: 'ban-khoe-khong-ex1',
+    parentId: 'ban-khoe-khong',
+    text: 'Tôi khỏe, cảm ơn bạn.',
+    syllables: syl('Tôi', 'khỏe', 'cảm', 'ơn', 'bạn'),
+    meaning: '元気です、ありがとう。',
+  },
+
+  // ===== nuoc-my =====
+  {
+    id: 'nuoc-my-ex1',
+    parentId: 'nuoc-my',
+    text: 'Anh ấy sống ở Nước Mỹ.',
+    syllables: syl('Anh', 'ấy', 'sống', 'ở', 'Nước', 'Mỹ'),
+    meaning: '彼はアメリカに住んでいます。',
+  },
+
+  // ===== toi-cung-vay =====
+  {
+    id: 'toi-cung-vay-ex1',
+    parentId: 'toi-cung-vay',
+    text: 'Tôi cũng nghĩ vậy.',
+    syllables: syl('Tôi', 'cũng', 'nghĩ', 'vậy'),
+    meaning: '私もそう思います。',
   },
 ];
 
 export function getPhrase(id: string): Phrase | undefined {
-  return PHRASES.find((p) => p.id === id);
+  return PHRASES.find((p) => p.id === id) ?? EXAMPLE_SENTENCES.find((e) => e.id === id);
+}
+
+export function getExamples(phraseId: string): ExampleSentence[] {
+  return EXAMPLE_SENTENCES.filter((e) => e.parentId === phraseId);
 }

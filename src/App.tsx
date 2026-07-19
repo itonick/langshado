@@ -4,7 +4,7 @@ import PracticeView from './components/PracticeView';
 import ReviewView from './components/ReviewView';
 import { StoreProvider, useStore } from './store';
 
-type View = { name: 'home' } | { name: 'practice'; phraseId: string } | { name: 'review' };
+type View = { name: 'home' } | { name: 'practice'; phraseId: string; parentId?: string } | { name: 'review' };
 
 function EarphoneNotice() {
   const [dismissed, setDismissed] = useState(false);
@@ -26,6 +26,20 @@ function Shell() {
   const goPractice = (phraseId: string) => setView({ name: 'practice', phraseId });
   const goHome = () => setView({ name: 'home' });
   const goReview = () => setView({ name: 'review' });
+
+  const handleBack = () => {
+    if (view.name === 'practice' && view.parentId) {
+      setView({ name: 'practice', phraseId: view.parentId });
+    } else {
+      goHome();
+    }
+  };
+
+  const handleSelectExample = (exampleId: string) => {
+    if (view.name === 'practice') {
+      setView({ name: 'practice', phraseId: exampleId, parentId: view.phraseId });
+    }
+  };
 
   return (
     <div className="min-h-full">
@@ -58,7 +72,13 @@ function Shell() {
       ) : view.name === 'home' ? (
         <HomeView onSelectPhrase={goPractice} onGoReview={goReview} />
       ) : view.name === 'practice' ? (
-        <PracticeView key={view.phraseId} phraseId={view.phraseId} onBack={goHome} />
+        <PracticeView
+          key={view.phraseId}
+          phraseId={view.phraseId}
+          parentId={view.parentId}
+          onBack={handleBack}
+          onSelectExample={handleSelectExample}
+        />
       ) : (
         <ReviewView onSelectPhrase={goPractice} onBack={goHome} />
       )}

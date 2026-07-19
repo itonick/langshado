@@ -5,7 +5,7 @@ import { loadAndAnalyze } from '../audio/pitch';
 import { AudioPlayer } from '../audio/player';
 import { LivePitchRecorder } from '../audio/recorder';
 import { pitchScore, scoreColor } from '../audio/score';
-import { getPhrase } from '../data/phrases';
+import { getExamples, getPhrase } from '../data/phrases';
 import { PASS_COUNT, PASS_SCORE, useStore } from '../store';
 import PitchOverlay from './PitchOverlay';
 import Player, { type AudioStatus } from './Player';
@@ -14,14 +14,16 @@ import SyllableText from './SyllableText';
 
 interface Props {
   phraseId: string;
+  parentId?: string;
   onBack: () => void;
+  onSelectExample?: (id: string) => void;
 }
 
 function audioUrl(id: string): string {
   return `${import.meta.env.BASE_URL}audio/${id}.mp3`;
 }
 
-export default function PracticeView({ phraseId, onBack }: Props) {
+export default function PracticeView({ phraseId, parentId, onBack, onSelectExample }: Props) {
   const phrase = getPhrase(phraseId);
   const { meta, progress, recordAttempt, isBookmarked, toggleBookmark, updateSettings } = useStore();
 
@@ -116,7 +118,7 @@ export default function PracticeView({ phraseId, onBack }: Props) {
       const s = pitchScore(refPitch, result.pitch);
       setScore(s);
       const { becameMastered } = await recordAttempt(phraseId, s, result.blob);
-      if (becameMastered) setLastResult('🎉 mastered になりました！この段が揃えば次段が解放されます。');
+      if (becameMastered) setLastResult('🎉 mastered になりました！このステップが揃えば次ステップが解放されます。');
       else if (s >= PASS_SCORE) setLastResult('✅ 合格スコア！習熟カウントが進みました。');
       else setLastResult('もう一度。声調の「形」をお手本に近づけましょう。');
     } else if (!refPitch) {
@@ -164,6 +166,8 @@ export default function PracticeView({ phraseId, onBack }: Props) {
     );
   }
 
+  const examples = getExamples(phraseId);
+
   const prog = progress.get(phraseId);
   const passCount = prog?.passCount ?? 0;
   const phraseBookmarked = isBookmarked('phrase', phraseId);
@@ -173,7 +177,7 @@ export default function PracticeView({ phraseId, onBack }: Props) {
     <div className="mx-auto max-w-3xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="text-blue-400 hover:underline">
-          ← 一覧へ
+          {parentId ? `← ${getPhrase(parentId)?.text ?? '戻る'}` : '← 一覧へ'}
         </button>
         <div className="flex items-center gap-2 text-sm">
           {prog?.status === 'mastered' && (
@@ -294,6 +298,45 @@ export default function PracticeView({ phraseId, onBack }: Props) {
       </div>
 
       {lastResult && <p className="text-sm text-slate-300">{lastResult}</p>}
+
+      {examples.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            関連例文 ({examples.length}件)
+          </h2>
+          {examples.map((ex) => (
+            <div
+              key={ex.id}
+              className="flex items-center justify-between gap-3 rounded-lg bg-slate-800/50 px-4 py-3 ring-1 ring-slate-700"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-slate-100">{ex.text}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{ex.meaning}</p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <button
+                  onClick={() => {
+                    const audio = new Audio(audioUrl(ex.id));
+                    void audio.play();
+                  }}
+                  className="rounded bg-slate-700 px-2 py-1 text-xs hover:bg-slate-600"
+                  title="音声を聴く"
+                >
+                  ▶ 聴く
+                </button>
+                {onSelectExample && (
+                  <button
+                    onClick={() => onSelectExample(ex.id)}
+                    className="rounded bg-blue-700 px-2 py-1 text-xs hover:bg-blue-600"
+                  >
+                    練習
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

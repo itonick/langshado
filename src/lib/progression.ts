@@ -12,11 +12,18 @@ export interface Tier {
 }
 
 export const TIERS: Tier[] = [
-  { level: 1, introduces: ['ngang', 'huyền'], title: '段1：平音＋低く下がる', hint: '土台（ngang / huyền）' },
-  { level: 2, introduces: ['sắc'], title: '段2：高く上がる', hint: '+ sắc' },
-  { level: 3, introduces: ['nặng'], title: '段3：短く詰まる', hint: '+ nặng' },
-  { level: 4, introduces: ['hỏi'], title: '段4：低く沈んで戻る（難）', hint: '+ hỏi' },
-  { level: 5, introduces: ['ngã'], title: '段5：きしんで上がる（最難）', hint: '+ ngã' },
+  // ステップ 1–5：単語
+  { level: 1, introduces: ['ngang', 'huyền'], title: 'ステップ1：平音＋低く下がる', hint: '単語（ngang / huyền）' },
+  { level: 2, introduces: ['sắc'],            title: 'ステップ2：高く上がる',         hint: '単語（+ sắc）' },
+  { level: 3, introduces: ['nặng'],           title: 'ステップ3：短く詰まる',         hint: '単語（+ nặng）' },
+  { level: 4, introduces: ['hỏi'],            title: 'ステップ4：低く沈んで戻る',     hint: '単語（+ hỏi）' },
+  { level: 5, introduces: ['ngã'],            title: 'ステップ5：きしんで上がる',     hint: '単語（+ ngã）' },
+  // ステップ 6–10：文
+  { level: 6,  introduces: [], title: 'ステップ6：文①',  hint: '文（平声のみ）' },
+  { level: 7,  introduces: [], title: 'ステップ7：文②',  hint: '文（+ sắc）' },
+  { level: 8,  introduces: [], title: 'ステップ8：文③',  hint: '文（+ nặng）' },
+  { level: 9,  introduces: [], title: 'ステップ9：文④',  hint: '文（+ hỏi）' },
+  { level: 10, introduces: [], title: 'ステップ10：文⑤', hint: '文（+ ngã）' },
 ];
 
 /** 声調 → 段。TIERS から逆引き。 */
@@ -30,8 +37,9 @@ export function toneTier(tone: Tone): number {
   return TONE_TIER[tone] ?? 1;
 }
 
-/** フレーズ難易度 = 含まれる音節の声調のうち最も後段のもの。 */
+/** フレーズ難易度 = phrase.tier 明示値があればそれを使い、なければ声調の自動判定。 */
 export function phraseTier(phrase: Phrase): number {
+  if (phrase.tier != null) return phrase.tier;
   let max = 1;
   for (const syl of phrase.syllables) {
     const t = toneTier(detectTone(syl.text));
