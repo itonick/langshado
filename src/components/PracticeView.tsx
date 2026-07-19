@@ -5,7 +5,7 @@ import { loadAndAnalyze } from '../audio/pitch';
 import { AudioPlayer } from '../audio/player';
 import { LivePitchRecorder } from '../audio/recorder';
 import { pitchScore, scoreColor } from '../audio/score';
-import { getExamples, getPhrase } from '../data/phrases';
+import { getExamples, getPhrase, isExample } from '../data/phrases';
 import { PASS_COUNT, PASS_SCORE, useStore } from '../store';
 import PitchOverlay from './PitchOverlay';
 import Player, { type AudioStatus } from './Player';
@@ -118,7 +118,13 @@ export default function PracticeView({ phraseId, parentId, onBack, onSelectExamp
       const s = pitchScore(refPitch, result.pitch);
       setScore(s);
       const { becameMastered } = await recordAttempt(phraseId, s, result.blob);
-      if (becameMastered) setLastResult('🎉 mastered になりました！このステップが揃えば次ステップが解放されます。');
+      if (becameMastered)
+        setLastResult(
+          // 例文は補助教材なのでステップ解放には言及しない。
+          isExample(phraseId)
+            ? '🎉 この例文を mastered にしました！'
+            : '🎉 mastered になりました！このステップが揃えば次ステップが解放されます。',
+        );
       else if (s >= PASS_SCORE) setLastResult('✅ 合格スコア！習熟カウントが進みました。');
       else setLastResult('もう一度。声調の「形」をお手本に近づけましょう。');
     } else if (!refPitch) {
