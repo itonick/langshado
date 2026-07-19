@@ -322,3 +322,8 @@ export function getPhrase(id: string): Phrase | undefined {
 export function getExamples(phraseId: string): ExampleSentence[] {
   return EXAMPLE_SENTENCES.filter((e) => e.parentId === phraseId);
 }
+
+/** その id が例文（関連例文）かどうか。例文は補助教材でステップ進行に数えない。 */
+export function isExample(id: string): boolean {
+  return EXAMPLE_SENTENCES.some((e) => e.id === id);
+}

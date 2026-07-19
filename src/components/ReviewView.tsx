@@ -1,7 +1,8 @@
 // ブックマーク ＋ SRS期限の復習画面。§7 ReviewView / §6 住み分け
-import { getPhrase } from '../data/phrases';
+import { getPhrase, isExample } from '../data/phrases';
 import { lookupDict } from '../data/dict';
 import type { SrsItem } from '../lib/db';
+import { effectiveStatus } from '../lib/progression';
 import { detectTone, toneInfo } from '../lib/tone';
 import { useStore } from '../store';
 
@@ -11,7 +12,17 @@ interface Props {
 }
 
 export default function ReviewView({ onSelectPhrase, onBack }: Props) {
-  const { bookmarks, dueSrs, toggleBookmark, reviewSrsItem } = useStore();
+  const { bookmarks, dueSrs, progress, tierStates, toggleBookmark, reviewSrsItem } = useStore();
+
+  // 例文は「親フレーズのステップがロック中ならロック扱い」。親で判定する。
+  const isLocked = (id: string): boolean => {
+    const phrase = getPhrase(id);
+    if (!phrase) return false;
+    const targetId = isExample(id) ? (phrase as { parentId?: string }).parentId ?? id : id;
+    const target = getPhrase(targetId);
+    if (!target) return false;
+    return effectiveStatus(target, tierStates, progress) === 'locked';
+  };
 
   const phraseBookmarks = bookmarks.filter((b) => b.type === 'phrase');
   const syllableBookmarks = bookmarks.filter((b) => b.type === 'syllable');
@@ -20,18 +31,23 @@ export default function ReviewView({ onSelectPhrase, onBack }: Props) {
     if (item.type === 'phrase') {
       const phrase = getPhrase(item.itemId);
       if (!phrase) return null;
+      const locked = isLocked(phrase.id);
       return (
         <div
           key={item.itemId}
           className="flex items-center justify-between rounded-md bg-slate-800/70 px-3 py-2 ring-1 ring-slate-700"
         >
           <div>
-            <div className="font-medium">{phrase.text}</div>
+            <div className="font-medium">
+              {locked ? '🔒 ' : ''}
+              {phrase.text}
+            </div>
             <div className="text-xs text-slate-400">{phrase.meaning}</div>
           </div>
           <button
             onClick={() => onSelectPhrase(phrase.id)}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500"
+            disabled={locked}
+            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
             練習する
           </button>
